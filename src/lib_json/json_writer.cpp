@@ -74,12 +74,27 @@ std::string valueToString( UInt value )
 
 std::string valueToString( double value )
 {
-   char buffer[32];
+	char buffer[32] = {0};
+   char bufferTemp[32] = {0};
 #if defined(_MSC_VER) && defined(__STDC_SECURE_LIB__) // Use secure version with visual studio 2005 to avoid warning. 
-   sprintf_s(buffer, sizeof(buffer), "%#.20g", value); 
+   sprintf_s(buffer, sizeof(buffer), "%#.15g", value);
+   sprintf_s(bufferTemp, sizeof(bufferTemp), "%#.20g", value);
 #else	
-   sprintf(buffer, "%#.20g", value); 
+   sprintf(buffer, "%#.15g", value); 
+   sprintf(bufferTemp, "%#.20g", value); 
 #endif
+
+	//浮点数超过15位被截断的就使用20位数格式化后的数据
+   if (strlen(buffer) > 1 && buffer[strlen(buffer)-1] != '0')
+   {
+	   if((buffer[strlen(buffer)-1] == '.'
+		   || (buffer[strlen(buffer)-1] > bufferTemp[strlen(buffer)-1])
+		   ||((buffer[strlen(buffer)-1] == bufferTemp[strlen(buffer)-1]) && bufferTemp[strlen(buffer)] != '0')))
+	   {
+		   memcpy(buffer, bufferTemp, sizeof(buffer));
+	   }
+   }
+
    char* ch = buffer + strlen(buffer) - 1;
    if (*ch != '0') return buffer; // nothing to truncate, so save time
    while(ch > buffer && *ch == '0'){
